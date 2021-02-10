@@ -2,6 +2,7 @@ package jm.task.core.jdbc.dao;
 
 import jm.task.core.jdbc.model.User;
 import jm.task.core.jdbc.util.Util;
+import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
@@ -24,13 +25,11 @@ public class UserDaoHibernateImpl implements UserDao {
         try {
             transaction = session.beginTransaction();
 
-            String sql = "CREATE TABLE IF NOT EXISTS users " +
+            session.createSQLQuery("CREATE TABLE IF NOT EXISTS users " +
                     "(id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
                     "name VARCHAR(100) NOT NULL," +
                     "lastName VARCHAR(100) NOT NULL," +
-                    "age INT NOT NULL)";
-
-            session.createSQLQuery(sql).executeUpdate();
+                    "age INT NOT NULL)").executeUpdate();
 
             transaction.commit();
         } catch (Exception ex) {
@@ -51,9 +50,7 @@ public class UserDaoHibernateImpl implements UserDao {
         try {
             transaction = session.beginTransaction();
 
-            String sql = "DROP TABLE IF EXISTS  users";
-
-            session.createSQLQuery(sql).executeUpdate();
+            session.createSQLQuery("DROP TABLE IF EXISTS users").executeUpdate();
 
             transaction.commit();
         } catch (Exception ex) {
@@ -73,8 +70,9 @@ public class UserDaoHibernateImpl implements UserDao {
 
         try {
             transaction = session.beginTransaction();
+
             User user = new User(name, lastName, age);
-            System.out.println("saveUser: " + user.toString());
+
             session.save(user);
 
             transaction.commit();
@@ -96,9 +94,9 @@ public class UserDaoHibernateImpl implements UserDao {
         try {
             transaction = session.beginTransaction();
 
-            User user = (User) session.get(User.class, id);
-
-            session.delete(user);
+            Query query = session.createQuery("DELETE User WHERE id = :paramId");
+            query.setParameter("paramId", id);
+            query.executeUpdate();
 
             transaction.commit();
         } catch (Exception ex) {
@@ -120,8 +118,7 @@ public class UserDaoHibernateImpl implements UserDao {
         try {
             transaction = session.beginTransaction();
 
-            String query = "from " + User.class.getSimpleName();
-            list = session.createQuery(query).list();
+            list = session.createQuery("FROM User").list();
 
             transaction.commit();
         } catch (Exception ex) {
@@ -144,12 +141,7 @@ public class UserDaoHibernateImpl implements UserDao {
         try {
             transaction = session.beginTransaction();
 
-            String query = "from " + User.class.getSimpleName();
-            List<User> list = session.createQuery(query).list();
-
-            for (User user : list) {
-                session.delete(user);
-            }
+            session.createQuery("DELETE FROM User").executeUpdate();
 
             transaction.commit();
         } catch (Exception ex) {
