@@ -20,18 +20,13 @@ public class UserDaoJDBCImpl implements UserDao {
 
     public void createUsersTable() {
         try (Statement statement = util.getMyConection().createStatement()) {
-            try {
-                String query = "SELECT * FROM users";
-                ResultSet res = statement.executeQuery(query);
-            }  catch (SQLException e) {
-                String sql = "CREATE TABLE users (" +
-                        "dbId INT AUTO_INCREMENT NOT NULL, " +
-                        "dbName VARCHAR(100) NOT NULL, " +
-                        "dbLastName VARCHAR(100) NOT NULL, " +
-                        "dbAge INT NOT NULL," +
-                        "PRIMARY KEY (dbId))";
-                statement.execute(sql);
-            }
+
+            statement.execute("CREATE TABLE IF NOT EXISTS users " +
+                    "(dbId INT NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
+                    "dbName VARCHAR(100) NOT NULL," +
+                    "dbLastName VARCHAR(100) NOT NULL," +
+                    "dbAge INT NOT NULL)");
+
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
@@ -39,23 +34,17 @@ public class UserDaoJDBCImpl implements UserDao {
 
     public void dropUsersTable() {
         try (Statement statement = util.getMyConection().createStatement()) {
-            try {
-                String query = "SELECT * FROM users";
-                statement.executeQuery(query);
-                String sql = "DROP TABLE users";
-                statement.execute(sql);
-            }  catch (SQLException e) {
 
-            }
+            statement.execute("DROP TABLE IF EXISTS  users");
+
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
     }
 
     public void saveUser(String sName, String lastName, byte age) {
-        String sql = "INSERT INTO users(dbName, dbLastName, dbAge) VALUES (?, ?, ?)";
         try (PreparedStatement statement = util.getMyConection()
-                .prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                .prepareStatement("INSERT INTO users(dbName, dbLastName, dbAge) VALUES (?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
 
             statement.setString(1, sName);
             statement.setString(2, lastName);
@@ -68,9 +57,12 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public void removeUserById(long id) {
-        try (Statement statement = util.getMyConection().createStatement()) {
-            String sql = "DELETE FROM users WHERE dbId = " + id;
-            statement.execute(sql);
+        try (PreparedStatement statement = util.getMyConection()
+                .prepareStatement("DELETE FROM users WHERE dbId = ?")) {
+
+            statement.setLong(1, id);
+            statement.execute();
+
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
@@ -78,8 +70,7 @@ public class UserDaoJDBCImpl implements UserDao {
 
     public List<User> getAllUsers() {
         try (Statement statement = util.getMyConection().createStatement()) {
-            String sql = "SELECT * FROM users";
-            ResultSet rs = statement.executeQuery(sql);
+            ResultSet rs = statement.executeQuery("SELECT * FROM users");
 
             while (rs.next()) {
                 User user = new User();
@@ -100,8 +91,9 @@ public class UserDaoJDBCImpl implements UserDao {
 
     public void cleanUsersTable() {
         try (Statement statement = util.getMyConection().createStatement()) {
-            String sql = "TRUNCATE TABLE users";
-            statement.execute(sql);
+
+            statement.execute("TRUNCATE TABLE users");
+
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
